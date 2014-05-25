@@ -7,7 +7,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Maternity Data Viz</title>
+    <title>MatStats - Method of Onset</title>
 
     <!-- Bootstrap core CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -70,49 +70,37 @@
 		$(function() {
 			var options = {
 				chart: {
-					type: 'column',
 					renderTo: 'chart'
 				},
 				title: {
-					text: 'Method of Delivery'
-				},
-				xAxis: {
-					categories: [],
-					title: {
-						text: 'Area'
-					}
-				},
-				yAxis: {
-					min: 0,
-					title: {
-						text: 'Incidents',
-						align: 'high'
-					},
-					labels: {
-						overflow: 'justify'
-					}
+					text: 'Method of Onset'
 				},
 				series: []				 
 			};
 			
-			$.getJSON('http://ec2-54-237-33-114.compute-1.amazonaws.com:8020/ec2/Maternity/getMethodOfDelivery?id=RVV', function(data) {
-				var x_categories = [];
+			$.getJSON('http://ec2-54-237-33-114.compute-1.amazonaws.com:8020/ec2/Maternity/getMethodOfOnset?id=RVV', function(data) {
 				var data_series = [];
 				
 				var series1 = [];
 				
+				var induction = 0;
+				
 				$.each(data, function(key,val) { 
-					//if (key == "Total") { } else if (key == "Description") {} else if (key == "Code" ) {} else
-					if (key == "Spontaneous" || key == "Elective_caesarean" || key == "Emergency_caesarean" || key == "Instrumental" || key == "Unknown" )
-					{
-						x_categories.push(key);
-						series1.push(val);
+					if (key == "Medical_Induction" || key == "Surgical_Induction" || key == "Surgical_and_medical_induction") {
+						if (Number.isInteger(parseInt(val))) {
+							induction = induction + val;
+						}
+					} else if (key == "Caesarean") {
+						series1.push(["Elective Caesarean", val]);
+					} else if (key == "Spontaneous") {
+						series1.push(["Spontaneous Onset", val]);
 					}
+					else {}
 				});
 				
-				options.xAxis.categories = x_categories;
-			
-				data_series.push({name: 'RGV', data:series1});
+				series1.push(["Induction", induction]);
+						
+				data_series.push({ type: 'pie',name: 'RGV', data:series1});
 				
 				console.info(data_series);
 				
