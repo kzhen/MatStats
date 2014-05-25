@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Maternity Data Viz</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="css/starter-template.css" rel="stylesheet">
+
+    <!-- Just for debugging purposes. Don't actually copy this line! -->
+    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Maternity Data Viz</a>
+        </div>
+        <div class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="index.html">Home</a></li>
+            <li class="active"><a href="visualization.html">Visualize</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="starter-template">
+        <h2>Visualize</h2>
+		
+		<div>
+			<div class="form-inline">
+			  <div class="form-group">
+				Area 1 <select class="form-control" id="areaSelector1"><option>Select area</option></select><br />
+				Area 2 <select class="form-control" id="areaSelector2"><option>Select area</option></select>
+			  </div>
+			  <button id="btnRefresh" type="submit" class="btn btn-default">Refresh</button>
+			</div>
+		</div>
+		
+		<div id="chart" style="min-width: 310px; height: 400px; margin: 0 auto">
+		</div>
+		
+      </div>
+
+    </div><!-- /.container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+	<script src="js/highcharts/highcharts.js"></script>
+	<script type="text/javascript">
+	
+		function compare_areas(areaCode1, areaCode2) {
+			var url1 = "http://ec2-54-237-33-114.compute-1.amazonaws.com:8020/ec2/Maternity/getMethodOfDelivery?id=" + areaCode1;
+			var url2 = "http://ec2-54-237-33-114.compute-1.amazonaws.com:8020/ec2/Maternity/getMethodOfDelivery?id=" + areaCode2;
+			
+			var options = {
+					chart: {
+					type: 'column',
+					renderTo: 'chart'
+				},
+				title: {
+					text: 'Comparison of Method of Delivery'
+				},
+			   xAxis: {
+					categories: []
+				},
+				yAxis: {
+					min: 0,
+					title: {
+						text: ''
+					}
+				},
+				tooltip: {
+					pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> ({point.percentage:.0f}%)<br/>',
+					shared: true
+				},
+				plotOptions: {
+					column: {
+						stacking: 'percent'
+					}
+				},
+				series: []				 
+			};
+			
+			var request = $.getJSON(url1),
+				chained = request.then(function (results_area1) {
+					$.getJSON(url2).then(function (results_area2) {
+						
+						var x_categories = [results_area1.Description, results_area2.Description];
+						var data_series = [];
+						
+						var dt_spontaneous = [];
+						var dt_Elective_caesarean = [];
+						var dt_Emergency_caesarean = [];
+						var dt_Instrumental = [];
+				
+						$.each(results_area1, function(key,val) { 
+							if (key == "Spontaneous") {
+								dt_spontaneous.push(val);
+							} else if ( key == "Elective_caesarean" ) {
+								dt_Elective_caesarean.push(val);
+							} else if ( key == "Emergency_caesarean") {
+								dt_Emergency_caesarean.push(val);
+							} else if (key == "Instrumental" ) {
+								dt_Instrumental.push(val);
+							}
+						});
+						
+						$.each(results_area2, function(key,val) { 
+							if (key == "Spontaneous") {
+								dt_spontaneous.push(val);
+							} else if ( key == "Elective_caesarean" ) {
+								dt_Elective_caesarean.push(val);
+							} else if ( key == "Emergency_caesarean") {
+								dt_Emergency_caesarean.push(val);
+							} else if (key == "Instrumental" ) {
+								dt_Instrumental.push(val);
+							}
+						});
+						
+						options.xAxis.categories = x_categories;
+			
+						data_series.push({name: "Spontaneous", data:dt_spontaneous});
+						data_series.push({name: "Elective caesarean", data:dt_Elective_caesarean});
+						data_series.push({name: "Emergency caesarean", data:dt_Emergency_caesarean});
+						data_series.push({name: "Instrumental", data:dt_Instrumental});
+						
+						console.info(data_series);
+						
+						options.series = data_series;
+						
+						var chart = new Highcharts.Chart(options);
+						
+					});
+				});
+		}
+
+		function loadAreas() {
+			$.getJSON("http://ec2-54-237-33-114.compute-1.amazonaws.com:8020/ec2/Maternity/getTrustList", function(data) {
+				$.each(data, function(key, val) {
+					$("#areaSelector1")
+						.append($("<option></option>")
+						.attr("value",key)
+						.text(val.name)); 
+					$("#areaSelector2")
+						.append($("<option></option>")
+						.attr("value",key)
+						.text(val.name)); 
+				});
+			});
+		}
+		
+		function btnRefresh_Clicked() {
+			var areaCode1 = $("#areaSelector1").val();
+			var areaCode2 = $("#areaSelector2").val();
+			compare_areas(areaCode1, areaCode2);
+		}
+	
+		$(function() {
+			loadAreas();
+			compare_areas("RVV", "RGT");
+			
+			$("#btnRefresh").click(btnRefresh_Clicked);
+		});
+	</script>
+  </body>
+</html>
