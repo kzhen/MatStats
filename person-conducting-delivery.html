@@ -52,6 +52,17 @@
       <div class="starter-template">
         <h2>Visualize</h2>
 		
+		<div>
+			<div class="form-inline">
+			  <div class="form-group">
+				Area
+				<select class="form-control" id="areaSelector">
+				</select>
+			  </div>
+			  <button id="btnRefresh" type="submit" class="btn btn-default">Refresh</button>
+			</div>
+		</div>
+		
 		<div id="chart" style="min-width: 310px; height: 400px; margin: 0 auto">
 		</div>
 		
@@ -67,7 +78,10 @@
     <script src="js/bootstrap.min.js"></script>
 	<script src="js/highcharts/highcharts.js"></script>
 	<script type="text/javascript">
-		$(function() {
+	
+		function refreshChart(areaCode) {
+			var url = "http://ec2-54-237-33-114.compute-1.amazonaws.com:8020/ec2/Maternity/getPersonConductingDelivery?id=" + areaCode;
+			
 			var options = {
 				chart: {
 					renderTo: 'chart'
@@ -78,7 +92,7 @@
 				series: []				 
 			};
 			
-			$.getJSON('http://ec2-54-237-33-114.compute-1.amazonaws.com:8020/ec2/Maternity/getPersonConductingDelivery?id=RVV', function(data) {
+			$.getJSON(url, function(data) {
 				var data_series = [];
 				
 				var series1 = [];
@@ -113,6 +127,29 @@
 				
 				var chart = new Highcharts.Chart(options);
 			});
+		}
+	
+		function loadAreas() {
+			$.getJSON("http://ec2-54-237-33-114.compute-1.amazonaws.com:8020/ec2/Maternity/getTrustList", function(data) {
+				$.each(data, function(key, val) {
+					$("#areaSelector")
+						.append($("<option></option>")
+						.attr("value",key)
+						.text(val.name)); 
+				});
+			});
+		}
+		
+		function btnRefresh_Clicked() {
+			var areaCode = $("#areaSelector").val();
+			refreshChart(areaCode);
+		}
+	
+		$(function() {
+			loadAreas();
+			refreshChart("RVV");
+			
+			$("#btnRefresh").click(btnRefresh_Clicked);
 		});
 	</script>
   </body>
