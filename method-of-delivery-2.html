@@ -95,13 +95,6 @@
 				series: []				 
 			};
 			
-			/*
-			var series1 = {
-				name: 'my series',
-				data: [['a',1],['b',2],['c',3],['d',4],['e',5],['f',6],['g',7]]
-			};*/
-			/*
-			var series = [];
 			
 			$.getJSON('http://ec2-54-237-33-114.compute-1.amazonaws.com:8020/ec2/Maternity/getMethodOfDelivery?id=RGT', function(data) {
 				$.each(data, function(key, val) {
@@ -113,34 +106,30 @@
 				});
 			});
 			
-			console.info(series);
-			*/
+			$.getJSON('http://ec2-54-237-33-114.compute-1.amazonaws.com:8020/ec2/Maternity/getMethodOfDelivery?id=RVV', function(data) {
+				var x_categories = [];
+				var data_series = [];
+				
+				var series1 = [];
+				
+				$.each(data, function(key,val) { 
+					if (key == "Total") { } else
+					{
+						x_categories.push(key);
+						series1.push(val);
+					}
+				});
+				
+				options.xAxis.categories = x_categories;
 			
-			var RGVjson = JSON.parse('{"Breech_extraction":"*","Breech_other":39,"Caesarean":1547,"Code":"RGT","Description":"Cambridge University Hospitals NHS Foundation Trust","Elective_caesarean":705,"Emergency_caesarean":842,"Forceps_low":460,"Forceps_other ":"*","Instrumental":714,"Other":"-","Spontaneous":3285,"Spontaneous_other":70,"Spontaneous_vertex":3176,"Total":5558,"Unknown":12,"Ventouse":223}');
-			
-			var x_categories = [];
-			var data_series = [];
-			
-			var series1 = [];
-			
-			$.each(RGVjson, function(key,val) { 
-				if (key == "Total") { } else
-				{
-					x_categories.push(key);
-					series1.push(val);
-				}
+				data_series.push({name: 'RGV', data:series1});
+				
+				console.info(data_series);
+				
+				options.series = data_series;
+				
+				var chart = new Highcharts.Chart(options);
 			});
-
-			options.xAxis.categories = x_categories;
-			
-			data_series.push({name: 'RGV', data:series1});
-			
-			console.info(data_series);
-			
-			options.series = data_series;
-			
-			var chart = new Highcharts.Chart(options);
-			
 		});
 	</script>
   </body>
