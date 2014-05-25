@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>MatStats - Method of Delivery over Time</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="css/starter-template.css" rel="stylesheet">
+
+    <!-- Just for debugging purposes. Don't actually copy this line! -->
+    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Maternity Data Viz</a>
+        </div>
+        <div class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="index.html">Home</a></li>
+            <li class="active"><a href="visualization.html">Visualize</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="starter-template">
+        <h2>Visualize</h2>
+		
+		<div>
+			<div class="form-inline">
+			  <div class="form-group">
+				Area
+				<select class="form-control" id="areaSelector">
+				</select>
+			  </div>
+			  <button id="btnRefresh" type="submit" class="btn btn-default">Refresh</button>
+			</div>
+		</div>
+		
+		<div id="chart" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+		<div id="container123" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+		
+		
+		
+		
+      </div>
+
+    </div><!-- /.container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+	<script src="js/highcharts/highcharts.js"></script>
+	<script type="text/javascript">
+	
+		function refreshTimeChart(areaCode) {
+			var url = "http://ec2-54-237-33-114.compute-1.amazonaws.com:8020/ec2/Maternity/getMethodOfDelivery?id=" + areaCode + "&year=";
+			
+			var options = {
+				chart: {
+					type: 'line',
+					renderTo: 'chart'
+				},
+				title: {
+					text: 'Time Trend - Method of Delivery',
+					x: -20 //center
+				},
+				xAxis: {
+					categories: ['2010', '2011', '2012', '2013']
+				},
+				yAxis: {
+					title: {
+						text: 'Incidents'
+					},
+					plotLines: [{
+						value: 0,
+						width: 1,
+						color: '#808080'
+					}]
+				},
+				
+				legend: {
+					layout: 'vertical',
+					align: 'right',
+					verticalAlign: 'middle',
+					borderWidth: 0
+				},
+				series: []
+			};
+			
+			var data_series = [];
+			
+			$.getJSON(url+"2013").then(function (resultset4) {
+				$.getJSON(url+"2012").then(function (resultset3) {
+					$.getJSON(url+"2011").then(function (resultset2) {
+						$.getJSON(url+"2010").then(function (resultset1) {
+						
+							var dt_Spontaneous = [parseInt(resultset1.Spontaneous.valueOf()), parseInt(resultset2.Spontaneous.valueOf()), parseInt(resultset3.Spontaneous.valueOf()), parseInt(resultset4.Spontaneous.valueOf())];
+							
+							var dt_Elective_caesarean = [parseInt(resultset1.Elective_caesarean.valueOf()), parseInt(resultset2.Elective_caesarean.valueOf()), parseInt(resultset3.Elective_caesarean.valueOf()), parseInt(resultset4.Elective_caesarean.valueOf())];
+							
+							var dt_Emergency_caesarean = [resultset1.Emergency_caesarean.valueOf(), resultset2.Emergency_caesarean.valueOf(), parseInt(resultset3.Emergency_caesarean.valueOf()), resultset4.Emergency_caesarean.valueOf()];
+							
+							var dt_Instrumental = [resultset1.Instrumental.valueOf(), resultset2.Instrumental.valueOf(), parseInt(resultset3.Instrumental.valueOf()), resultset4.Instrumental.valueOf()];
+							
+							data_series.push({name: "Spontaneous", data:dt_Spontaneous});
+							data_series.push({name: "Elective_caesarean", data:dt_Elective_caesarean});
+							data_series.push({name: "Emergency_caesarean", data:dt_Emergency_caesarean});
+							data_series.push({name: "Instrumental", data:dt_Instrumental});
+							
+							options.series = data_series;
+				
+							var chart = new Highcharts.Chart(options);
+						});
+					});
+				});
+			});
+		}
+	
+		function loadAreas() {
+			$.getJSON("http://ec2-54-237-33-114.compute-1.amazonaws.com:8020/ec2/Maternity/getTrustList", function(data) {
+				$.each(data, function(key, val) {
+					$("#areaSelector")
+						.append($("<option></option>")
+						.attr("value",key)
+						.text(val.name)); 
+				});
+			});
+		}
+		
+		function btnRefresh_Clicked() {
+			var areaCode = $("#areaSelector").val();
+			refreshTimeChart(areaCode);
+		}
+	
+		$(function() {
+			loadAreas();
+			refreshTimeChart("RVV");
+			
+			$("#btnRefresh").click(btnRefresh_Clicked);
+		});
+    
+	</script>
+  </body>
+</html>
